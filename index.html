@@ -11,26 +11,22 @@ h1{margin-top:30px;font-size:36px}.sub{opacity:0.8;margin:10px 0 25px}
 .box{width:100%;max-width:400px;background:white;border-radius:20px;padding:25px;color:#333;box-shadow:0 15px 35px rgba(0,0,0,0.2)}
 .search{display:flex;gap:10px;margin-bottom:20px}
 #city{flex:1;padding:14px;border:2px solid #eee;border-radius:12px;font-size:16px;outline:none}
-#city:focus{border-color:#667eea}
 #btn{padding:14px 20px;background:#667eea;color:white;border:none;border-radius:12px;font-weight:bold;cursor:pointer}
-#btn:hover{background:#5a67d8}
 .result{text-align:center;padding:15px;display:none}
 .result.show{display:block}
 .temp{font-size:60px;font-weight:bold;color:#667eea}
-.city-name{font-size:24px;margin:10px 0}
+.city-name{font-size:24px;margin:10px 0;text-transform:capitalize}
 .desc{color:#666;text-transform:capitalize;font-size:18px}
 .details{display:flex;justify-content:space-around;margin-top:20px;background:#f8f9fa;padding:15px;border-radius:12px}
-.details div{text-align:center}
-.details b{display:block;font-size:18px;color:#333}
 .footer{margin-top:25px;font-size:13px;opacity:0.7}
 </style>
 </head>
 <body>
 <h1>Weather App</h1>
-<p class="sub">My 3rd JavaScript Project - API Project</p>
+<p class="sub">Live Weather - No API Key Needed</p>
 <div class="box">
 <div class="search">
-<input type="text" id="city" placeholder="Sheher likhen... e.g Karachi">
+<input type="text" id="city" placeholder="Sirf sheher likhen: Karachi">
 <button id="btn" onclick="getWeather()">Search</button>
 </div>
 <div id="result" class="result">
@@ -44,44 +40,35 @@ h1{margin-top:30px;font-size:36px}.sub{opacity:0.8;margin:10px 0 25px}
 </div>
 <p id="loading" style="text-align:center;color:#888;display:none">Loading...</p>
 </div>
-<p class="footer">Made by Imran Nida | Live API</p>
-
+<p class="footer">Made by Imran Nida</p>
 <script>
 async function getWeather(){
-let cityInput = document.getElementById('city').value.trim();
-if(!cityInput) return alert("Sheher ka naam likhen!");
-let resultDiv = document.getElementById('result');
-let loading = document.getElementById('loading');
+let city = document.getElementById('city').value.trim();
+if(!city) return alert("Sheher likhen!");
+city = city.replace(/weather/gi,"").trim();
+let resultDiv=document.getElementById('result');
+let loading=document.getElementById('loading');
 loading.style.display='block'; resultDiv.classList.remove('show');
-
 try{
-// Free API - No Key Needed
-let res = await fetch(`https://goweather.xyz/weather/${cityInput}`);
-let data = await res.json();
-
-if(!data.temperature){ throw new Error("City not found"); }
-
-document.getElementById('temp').innerText = data.temperature;
-document.getElementById('cityName').innerText = cityInput;
-document.getElementById('desc').innerText = data.description;
-document.getElementById('wind').innerText = data.wind;
-document.getElementById('hum').innerText = "Good"; // goweather doesn't give humidity
-
+let geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=en&format=json`);
+let geoData = await geo.json();
+if(!geoData.results) throw new Error("City not found");
+let lat = geoData.results[0].latitude;
+let lon = geoData.results[0].longitude;
+let name = geoData.results[0].name;
+let country = geoData.results[0].country;
+let weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m&timezone=auto`);
+let weatherData = await weatherRes.json();
+let temp = weatherData.current_weather.temperature;
+let wind = weatherData.current_weather.windspeed;
+let hum = weatherData.hourly.relativehumidity_2m[0];
+document.getElementById('temp').innerText = temp + "°C";
+document.getElementById('cityName').innerText = name + ", " + country;
+document.getElementById('desc').innerText = "Live Temperature";
+document.getElementById('wind').innerText = wind + " km/h";
+document.getElementById('hum').innerText = hum + "%";
 resultDiv.classList.add('show');
-}catch(e){
-// Backup free method
-try{
-let res2 = await fetch(`https://wttr.in/${cityInput}?format=j1`);
-let data2 = await res2.json();
-let curr = data2.current_condition[0];
-document.getElementById('temp').innerText = curr.temp_C + "°C";
-document.getElementById('cityName').innerText = cityInput;
-document.getElementById('desc').innerText = curr.weatherDesc[0].value;
-document.getElementById('wind').innerText = curr.windspeedKmph + " km/h";
-document.getElementById('hum').innerText = curr.humidity + "%";
-resultDiv.classList.add('show');
-}catch{ alert("Sheher nahi mila, Karachi, Lahore, Islamabad try karen"); }
-}
+}catch(e){ alert("Sheher nahi mila, sirf naam likhen jaise: lahore"); }
 loading.style.display='none';
 }
 document.getElementById('city').addEventListener("keypress", e=>{ if(e.key==="Enter") getWeather(); });
