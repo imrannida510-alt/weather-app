@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather App - Imran Nida</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;color:white}
+h1{margin-top:30px;font-size:36px}.sub{opacity:0.8;margin:10px 0 25px}
+.box{width:100%;max-width:400px;background:white;border-radius:20px;padding:25px;color:#333;box-shadow:0 15px 35px rgba(0,0,0,0.2)}
+.search{display:flex;gap:10px;margin-bottom:20px}
+#city{flex:1;padding:14px;border:2px solid #eee;border-radius:12px;font-size:16px;outline:none}
+#city:focus{border-color:#667eea}
+#btn{padding:14px 20px;background:#667eea;color:white;border:none;border-radius:12px;font-weight:bold;cursor:pointer}
+#btn:hover{background:#5a67d8}
+.result{text-align:center;padding:15px;display:none}
+.result.show{display:block}
+.temp{font-size:60px;font-weight:bold;color:#667eea}
+.city-name{font-size:24px;margin:10px 0}
+.desc{color:#666;text-transform:capitalize;font-size:18px}
+.details{display:flex;justify-content:space-around;margin-top:20px;background:#f8f9fa;padding:15px;border-radius:12px}
+.details div{text-align:center}
+.details b{display:block;font-size:18px;color:#333}
+.footer{margin-top:25px;font-size:13px;opacity:0.7}
+</style>
+</head>
+<body>
+<h1>Weather App</h1>
+<p class="sub">My 3rd JavaScript Project - API Project</p>
+<div class="box">
+<div class="search">
+<input type="text" id="city" placeholder="Sheher likhen... e.g Karachi">
+<button id="btn" onclick="getWeather()">Search</button>
+</div>
+<div id="result" class="result">
+<div class="temp" id="temp">--°C</div>
+<div class="city-name" id="cityName">--</div>
+<div class="desc" id="desc">--</div>
+<div class="details">
+<div><span>Humidity</span><b id="hum">--%</b></div>
+<div><span>Wind</span><b id="wind">-- km/h</b></div>
+</div>
+</div>
+<p id="loading" style="text-align:center;color:#888;display:none">Loading...</p>
+</div>
+<p class="footer">Made by Imran Nida | Live API</p>
+
+<script>
+async function getWeather(){
+let cityInput = document.getElementById('city').value.trim();
+if(!cityInput) return alert("Sheher ka naam likhen!");
+let resultDiv = document.getElementById('result');
+let loading = document.getElementById('loading');
+loading.style.display='block'; resultDiv.classList.remove('show');
+
+try{
+// Free API - No Key Needed
+let res = await fetch(`https://goweather.xyz/weather/${cityInput}`);
+let data = await res.json();
+
+if(!data.temperature){ throw new Error("City not found"); }
+
+document.getElementById('temp').innerText = data.temperature;
+document.getElementById('cityName').innerText = cityInput;
+document.getElementById('desc').innerText = data.description;
+document.getElementById('wind').innerText = data.wind;
+document.getElementById('hum').innerText = "Good"; // goweather doesn't give humidity
+
+resultDiv.classList.add('show');
+}catch(e){
+// Backup free method
+try{
+let res2 = await fetch(`https://wttr.in/${cityInput}?format=j1`);
+let data2 = await res2.json();
+let curr = data2.current_condition[0];
+document.getElementById('temp').innerText = curr.temp_C + "°C";
+document.getElementById('cityName').innerText = cityInput;
+document.getElementById('desc').innerText = curr.weatherDesc[0].value;
+document.getElementById('wind').innerText = curr.windspeedKmph + " km/h";
+document.getElementById('hum').innerText = curr.humidity + "%";
+resultDiv.classList.add('show');
+}catch{ alert("Sheher nahi mila, Karachi, Lahore, Islamabad try karen"); }
+}
+loading.style.display='none';
+}
+document.getElementById('city').addEventListener("keypress", e=>{ if(e.key==="Enter") getWeather(); });
+</script>
+</body>
+</html>
